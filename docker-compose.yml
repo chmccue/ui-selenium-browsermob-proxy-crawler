@@ -1,0 +1,47 @@
+version: '3.7'
+services:
+  company-uat:
+    container_name: company-uat
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env
+    user: root
+    volumes:
+      - ./build:/home/gradle/build
+
+  selenium-hub:
+    container_name: selenium-hub
+    image: selenium/hub:latest
+    restart: unless-stopped
+    ports:
+      - "4444:4444"
+    environment:
+      SE_OPTS: "-debug"
+      GRID_MAX_SESSION: 40
+      GRID_MAX_INSTANCES: 40
+
+  node-chrome:
+    image: selenium/node-chrome:latest
+    restart: unless-stopped
+    depends_on:
+      - selenium-hub
+    environment:
+      NODE_MAX_INSTANCES: 1
+      NODE_MAX_SESSION: 1
+      HUB_HOST: "selenium-hub"
+      HUB_PORT: "4444"
+      START_XVFB: "true"
+    shm_size: 2g
+    volumes:
+      - ./src/test/resources/uploadTestFiles:/dockerUploadTestFiles
+
+  selenium-chrome:
+    container_name: selenium-chrome
+    image: selenium/standalone-chrome:latest
+    restart: unless-stopped
+    ports:
+      - "4444:4444"
+    volumes:
+      - /dev/shm:/dev/shm
+      - ./src/test/resources/uploadTestFiles:/dockerUploadTestFiles

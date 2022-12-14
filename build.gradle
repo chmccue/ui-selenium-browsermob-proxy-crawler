@@ -1,0 +1,42 @@
+apply plugin: 'java'
+apply plugin: 'checkstyle'
+
+compileJava {
+  sourceCompatibility = 11
+  targetCompatibility = 11
+}
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+    implementation 'com.google.code.gson:gson:2.8.6'
+    implementation 'org.seleniumhq.selenium:selenium-java:4.6.0'
+    implementation 'io.github.prashant-ramcharan:courgette-jvm:6.8.0'
+    implementation 'org.apache.logging.log4j:log4j-core:2.19.0'
+    implementation 'io.github.bonigarcia:webdrivermanager:5.3.1'
+    implementation 'com.aventstack:extentreports:5.0.7'
+    implementation 'commons-io:commons-io:2.8.0'
+    implementation 'net.lightbody.bmp:browsermob-core:2.1.5'
+}
+
+tasks.withType(Test) {
+  systemProperties = System.getProperties() as Map<String, ?>
+  if (file('.env').exists()) {
+    file('.env').readLines().each() {
+      def (key, value) = it.tokenize('=')
+      environment key, value
+    }
+  }
+}
+
+task runChromeTest(type: Test) {
+  if (environment.get("SELENIUM_DRIVER_TYPE") == "local") {
+    environment "SELENIUM_BROWSER_TYPE", "chrome"
+  } else {
+    environment "SELENIUM_BROWSER_TYPE", "chromeHeadless"
+  }
+  include '**/suites/ChromeTestSuite.class'
+  outputs.upToDateWhen { false }
+}
